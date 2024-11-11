@@ -1,5 +1,8 @@
 package com.example.gson
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import java.io.IOException
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
@@ -12,8 +15,35 @@ import timber.log.Timber
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import com.google.gson.Gson
+import android.widget.Toast
 
-class MainActivity : AppCompatActivity() {
+data class Photo(
+    val id: String,
+    val owner: String,
+    val secret: String,
+    val server: String,
+    val farm: Int,
+    val title: String,
+    val ispublic: Int,
+    val isfriend: Int,
+    val isfamily: Int
+)
+
+data class PhotoPage(
+    val page: Int,
+    val pages: Int,
+    val perpage: Int,
+    val total: Int,
+    val photo: List<Photo>
+)
+
+data class Wrapper(
+    val photos: PhotoPage,
+    val stat: String
+)
+
+
+class MainActivity : AppCompatActivity(), OnPhotoClickListener{
     private val client = OkHttpClient()
     private val gson = Gson()
     private lateinit var recyclerView: RecyclerView
@@ -72,6 +102,18 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
+    override fun onPhotoClick(photo: Photo){
+        copyToClipboard(photo)
+    }
+
+    private fun copyToClipboard(photo: Photo) {
+        val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+        val link = "https://farm${photo.farm}.staticflickr.com/${photo.server}/${photo.id}_${photo.secret}_z.jpg"
+        val clip = ClipData.newPlainText("Photo Link", link)
+        clipboard.setPrimaryClip(clip)
+        Toast.makeText(this, "Copied to the clipboard", Toast.LENGTH_SHORT).show()
+    }
+
     private fun logEveryFifthPhoto(photos: List<Photo>) {
         for (i in photos.indices) {
             if ((i + 1) % 5 == 0) {
@@ -88,34 +130,10 @@ class MainActivity : AppCompatActivity() {
         val photoLinks = photos.map { photo ->
             "https://farm${photo.farm}.staticflickr.com/${photo.server}/${photo.id}_${photo.secret}_z.jpg"
         }
-
         photoLinks.forEach { link ->
             Timber.d("Photo link: $link")
         }
     }
 }
 
-data class Photo(
-    val id: String,
-    val owner: String,
-    val secret: String,
-    val server: String,
-    val farm: Int,
-    val title: String,
-    val ispublic: Int,
-    val isfriend: Int,
-    val isfamily: Int
-)
 
-data class PhotoPage(
-    val page: Int,
-    val pages: Int,
-    val perpage: Int,
-    val total: Int,
-    val photo: List<Photo>
-)
-
-data class Wrapper(
-    val photos: PhotoPage,
-    val stat: String
-)

@@ -1,8 +1,5 @@
 package com.example.gson
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,7 +9,11 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import timber.log.Timber
 
-class Adapter(private val photos: List<Photo>, private val context: Context) : RecyclerView.Adapter<Adapter.PhotoViewHolder>() {
+interface OnPhotoClickListener {
+    fun onPhotoClick(photo: Photo)
+}
+
+class Adapter(private val photos: List<Photo>, private val onPhotoClickListener: OnPhotoClickListener) : RecyclerView.Adapter<Adapter.PhotoViewHolder>() {
 
     inner class PhotoViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val imageView: ImageView = itemView.findViewById(R.id.imageView)
@@ -22,9 +23,8 @@ class Adapter(private val photos: List<Photo>, private val context: Context) : R
                 val position = bindingAdapterPosition
                 if (position != RecyclerView.NO_POSITION) {
                     val photo = photos[position]
-                    copyToClipboard(photo)
+                    onPhotoClickListener.onPhotoClick(photo)
                     Timber.i("Copied: https://farm${photo.farm}.staticflickr.com/${photo.server}/${photo.id}_${photo.secret}_z.jpg")
-                    Toast.makeText(context, "Copied to the clipboard: ", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -39,21 +39,10 @@ class Adapter(private val photos: List<Photo>, private val context: Context) : R
         val photo = photos[position]
         val imageUrl = "https://farm${photo.farm}.staticflickr.com/${photo.server}/${photo.id}_${photo.secret}_z.jpg"
 
-        loadImage(holder.imageView, imageUrl)
-    }
-
-    override fun getItemCount(): Int = photos.size
-
-    private fun copyToClipboard(photo: Photo) {
-        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        val link = "https://farm${photo.farm}.staticflickr.com/${photo.server}/${photo.id}_${photo.secret}_z.jpg"
-        val clip = ClipData.newPlainText("Photo Link", link)
-        clipboard.setPrimaryClip(clip)
-    }
-
-    private fun loadImage(imageView: ImageView, imageUrl: String) {
-        Glide.with(context)
+        Glide.with(holder.imageView.context)
             .load(imageUrl)
-            .into(imageView)
+            .into(holder.imageView)
     }
+    override fun getItemCount(): Int = photos.size
 }
+
